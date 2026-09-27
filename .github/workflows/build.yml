@@ -40,7 +40,7 @@ jobs:
         run: |
           git clone https://github.com/yanzihan/AnyKernel3 -b samsung ./Anykernel3
           
-- name: Build Kernel Clean
+      - name: Build Kernel Clean
         run: |
           source ./build_sm8350.sh ${{ matrix.target }}
           cp ./AnyKernel3/Lavender* ./
