@@ -11,7 +11,7 @@ K_MOD_DIR="$(pwd)/out/modules"
 SRC_DIR=$(pwd)
 TC_DIR=$(pwd)/clang
 JOBS="$(nproc --all)"
-MAKE_PARAMS="-j$JOBS -C $SRC_DIR O=$SRC_DIR/out ARCH=arm64 CC=clang CLANG_TRIPLE=$TC_DIR/bin/aarch64-linux-gnu- LLVM=1 CROSS_COMPILE=$TC_DIR/bin/llvm-"
+MAKE_PARAMS="-j$JOBS -C $SRC_DIR O=$SRC_DIR/out ARCH=arm64 CC=clang AS=clang LLVM=1 LLVM_IAS=1 CLANG_TRIPLE=$TC_DIR/bin/aarch64-linux-gnu- CROSS_COMPILE=$TC_DIR/bin/llvm-"
 export PATH="$TC_DIR/bin:$PATH"
 
 if [ "$DEVICE_MODEL" == "SM-G9910" ]; then
@@ -28,7 +28,7 @@ elif [ "$DEVICE_MODEL" == "SM-G990B" ]; then
     DEFCONFIG=r9q_defconfig
 elif [ "$DEVICE_MODEL" == "SM-G990B2" ]; then
     DEVICE_NAME="r9q2"
-    DEFCONFIG=/r9q2_defconfig
+    DEFCONFIG=r9q2_defconfig
 else
     echo "Config not found"
     exit
@@ -44,16 +44,18 @@ fi
 # Check the value of KSU
 if [ "$KSU" == "true" ]; then
     ZIP_NAME="Lavender_KSU_"$DEVICE_NAME"_"$DEVICE_MODEL"_"$(date +%d%m%y-%H%M)""
+    SUFFIX="_KSU"
     if [ -d "KernelSU" ]; then
         echo "KernelSU exists"
     else
         echo "KernelSU not found !"
         echo "Fetching ...."
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
+        curl -LSs "https://raw.githubusercontent.com/backslashxx/KernelSU/main/kernel/setup.sh" | bash -s master
     fi
 elif [ "$KSU" == "false" ]; then
     echo "KSU disabled"
     ZIP_NAME="Lavender_"$DEVICE_NAME"_"$DEVICE_MODEL"_"$(date +%d%m%y-%H%M)""
+    SUFFIX=""
     if [ -d "KernelSU" ]; then
         git reset HEAD --hard
     fi
@@ -87,7 +89,7 @@ if [ -d "AnyKernel3" ]; then
     zip -r9 $ZIP_NAME . -x '*.git*' '*patch*' '*ramdisk*' 'LICENSE' 'README.md'
     cd ..
 else
-    git clone https://github.com/LucasBlackLu/AnyKernel3 -b samsung
+    git clone https://github.com/yanzihan/AnyKernel3 -b samsung
     if [ -d "AnyKernel3/modules" ]; then
         rm -rf AnyKernel3/modules/
         mkdir AnyKernel3/modules/
@@ -109,24 +111,24 @@ else
     cd ..
 fi
 
-IMAGE_SRC="./out/arch/arm64/boot/Image"[cite: 4]
-DTBO_SRC="./out/arch/arm64/boot/dtbo.img"[cite: 4]
+IMAGE_SRC="./out/arch/arm64/boot/Image"
+DTBO_SRC="./out/arch/arm64/boot/dtbo.img"
 
-OUT_BOOT_NAME="boot_${DEVICE_NAME}_${DEVICE_MODEL}${SUFFIX}.img"
-OUT_DTBO_NAME="dtbo_${DEVICE_NAME}_${DEVICE_MODEL}${SUFFIX}.img"
+OUT_BOOT_NAME="boot.img"
+OUT_DTBO_NAME="dtbo.img"
 
-if [ -f "$DTBO_SRC" ]; then[cite: 4]
+if [ -f "$DTBO_SRC" ]; then
     cp "$DTBO_SRC" "./$OUT_DTBO_NAME"
-    echo "dtbo.img  $OUT_DTBO_NAME"
+    echo "dtbo.img Successfully exported: $OUT_DTBO_NAME"
 fi
 
-if [ -f "$IMAGE_SRC" ]; then[cite: 4]
-    echo " $OUT_BOOT_NAME ..."
+if [ -f "$IMAGE_SRC" ]; then
+    echo "Packing now $OUT_BOOT_NAME ..."
     python3 -m mkbootimg \
         --kernel "$IMAGE_SRC" \
         --header_version 3 \
         --os_version 16.0.0 \
         --os_patch_level 2026-09 \
         -o "./$OUT_BOOT_NAME"
-    echo "boot.img  $OUT_BOOT_NAME"
+    echo "boot.img Successfully generated: $OUT_BOOT_NAME"
 fi

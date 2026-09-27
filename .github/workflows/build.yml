@@ -1,11 +1,11 @@
-name: Build
+name: Kernel Build
 
 on:
   workflow_dispatch:
   pull_request:
   push:
     branches:
-      - 'lineage-22.2'
+      - 'sixteen'
 
 jobs:
   build_lavender:
@@ -24,45 +24,47 @@ jobs:
         run: |
           sudo apt update
           DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
+            python-is-python3 \
             attr ccache clang golang libbrotli-dev \
             libgtest-dev libprotobuf-dev libunwind-dev libusb-1.0-0-dev libzstd-dev \
             linux-modules-extra-$(uname -r) build-essential lld ninja-build protobuf-compiler zipalign gcc-aarch64-linux-gnu python3-pip
-          pip3 install mkbootimg
+          pip3 install git+https://android.googlesource.com/platform/system/tools/mkbootimg --break-system-packages
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-      - name: Fetch AOSP Clang
+      - name: Fetch Clang Toolchain
         run: |
-          wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r530567.tar.gz -O aosp-clang.tar.gz
-          mkdir clang && tar -xf aosp-clang.tar.gz -C clang && rm -rf aosp-clang.tar.gz
+          git clone https://github.com/yanzihan/clang-r547379 --depth=1 clang
           
       - name: Fetch AnyKernel3
         run: |
-          git clone https://github.com/LucasBlackLu/AnyKernel3 -b samsung ./Anykernel3
+          git clone https://github.com/yanzihan/AnyKernel3 -b samsung ./Anykernel3
           
-      - name: Build Kernel Clean
+- name: Build Kernel Clean
         run: |
-          source ./build_script.sh ${{ matrix.target }}
+          source ./build_sm8350.sh ${{ matrix.target }}
           cp ./AnyKernel3/Lavender* ./
+
       - name: Clean Kernel Source
         run: |
           make mrproper ARCH=arm64 LLVM=1
-          
+
       - name: Build Kernel With KSU
         run: |
-          source ./build_script.sh ${{ matrix.target }} --ksu
+          source ./build_sm8350.sh ${{ matrix.target }} --ksu
           cp ./AnyKernel3/Lavender* ./
-          
+
       - name: Publish to GitHub
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            Lavender*
-            *.img
-          name: Lavender-CI_${{ github.run_id }}
+            boot.img
+            dtbo.img
+            Lavender*.zip
+          name: Kernel-CI_${{ github.run_id }}
           tag_name: ${{ github.run_id }}
           body: |
             Kernel: 5.4.274
-            Clang: AOSP clang-r530567
+            Clang: AOSP clang-r547379
         env:
           GITHUB_TOKEN: ${{ secrets.TEST }}
