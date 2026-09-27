@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [SM-G9910, SM-G9960, SM-G9980]
+        target: [SM-G9980]
 
     steps:
       - name: Checkout repo
@@ -28,7 +28,8 @@ jobs:
             attr ccache clang golang libbrotli-dev \
             libgtest-dev libprotobuf-dev libunwind-dev libusb-1.0-0-dev libzstd-dev \
             linux-modules-extra-$(uname -r) build-essential lld ninja-build protobuf-compiler zipalign gcc-aarch64-linux-gnu python3-pip
-          pip3 install git+https://android.googlesource.com/platform/system/tools/mkbootimg --break-system-packages
+          git clone https://android.googlesource.com/platform/system/tools/mkbootimg --depth=1 /tmp/mkbootimg
+          sudo ln -sf /tmp/mkbootimg/mkbootimg.py /usr/local/bin/mkbootimg
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
