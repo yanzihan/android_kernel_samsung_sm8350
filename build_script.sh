@@ -108,3 +108,25 @@ else
     zip -r9 $ZIP_NAME . -x '*.git*' '*patch*' '*ramdisk*' 'LICENSE' 'README.md'
     cd ..
 fi
+
+IMAGE_SRC="./out/arch/arm64/boot/Image"[cite: 4]
+DTBO_SRC="./out/arch/arm64/boot/dtbo.img"[cite: 4]
+
+OUT_BOOT_NAME="boot_${DEVICE_NAME}_${DEVICE_MODEL}${SUFFIX}.img"
+OUT_DTBO_NAME="dtbo_${DEVICE_NAME}_${DEVICE_MODEL}${SUFFIX}.img"
+
+if [ -f "$DTBO_SRC" ]; then[cite: 4]
+    cp "$DTBO_SRC" "./$OUT_DTBO_NAME"
+    echo "dtbo.img  $OUT_DTBO_NAME"
+fi
+
+if [ -f "$IMAGE_SRC" ]; then[cite: 4]
+    echo " $OUT_BOOT_NAME ..."
+    python3 -m mkbootimg \
+        --kernel "$IMAGE_SRC" \
+        --header_version 3 \
+        --os_version 16.0.0 \
+        --os_patch_level 2026-09 \
+        -o "./$OUT_BOOT_NAME"
+    echo "boot.img  $OUT_BOOT_NAME"
+fi
