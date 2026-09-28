@@ -22,20 +22,44 @@ jobs:
 
       - name: Set up build environment
         run: |
-          sudo apt update -y
-          sudo apt install -y android-tools-mkbootimg build-essential libssl-dev bison flex libelf-dev bc cpio git zip unzip
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            git \
+            curl \
+            unzip \
+            wget \
+            zip \
+            zstd \
+            bison flex bc libelf-dev libssl-dev
+
+      - name: Cache Clang toolchain
+        id: cache-clang
+        uses: actions/cache@v4
+        with:
+          path: ./clang
+          key: clang-r547379-${{ github.run_id }}
 
       - name: Fetch Clang Toolchain
+        if: steps.cache-clang.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/yanzihan/clang-r547379 --depth=1 clang
-          
+
+      - name: Fetch prebuilt mkbootimg from yanzihan repo
+        run: |
+          rm -rf ./mkbootimg
+          git clone --depth=1 https://github.com/yanzihan/mkbootimg.git ./mkbootimg
+          chmod +x ./mkbootimg/mkbootimg ./mkbootimg/unpackbootimg
+          echo "${{ github.workspace }}/mkbootimg" >> $GITHUB_PATH
+
       - name: Fetch AnyKernel3
         run: |
           git clone https://github.com/yanzihan/AnyKernel3 -b samsung ./AnyKernel3
-          
+
       - name: Build Kernel Clean
         run: |
-          source ./build_sm8350.sh ${{ matrix.target }}
+          chmod +x ./build_sm8350.sh
+          ./build_sm8350.sh ${{ matrix.target }}
           cp ./AnyKernel3/Lavender* ./
 
       - name: Clean Kernel Source
@@ -44,7 +68,8 @@ jobs:
 
       - name: Build Kernel With KSU
         run: |
-          source ./build_sm8350.sh ${{ matrix.target }} --ksu
+          chmod +x ./build_sm8350.sh
+          ./build_sm8350.sh ${{ matrix.target }} --ksu
           cp ./AnyKernel3/Lavender* ./
 
       - name: Publish to GitHub
