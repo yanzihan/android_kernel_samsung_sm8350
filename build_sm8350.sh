@@ -112,10 +112,14 @@ else
 fi
 
 IMAGE_SRC="./out/arch/arm64/boot/Image"
+DTB_SRC="./out/arch/arm64/boot/dts/vendor/qcom/dtb"
 DTBO_SRC="./out/arch/arm64/boot/dtbo.img"
-
+RAMDISK_SRC="./boot/ramdisk"
 OUT_BOOT_NAME="boot.img"
 OUT_DTBO_NAME="dtbo.img"
+    CMDLINE="console=null androidboot.hardware=qcom androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 androidboot.usbcontroller=a600000.dwc3 swiotlb=2048 loop.max_part=7 cgroup.memory=nokmem,nosocket firmware_class.path=/vendor/firmware_mnt/image printk.devkmsg=on pcie_ports=compat cpuinfo.chipname=SM8350 panic=4"
+BOARD="SRPTI01C016"
+MONTH="$(date +%Y-%m)"
 
 if [ -f "$DTBO_SRC" ]; then
     cp "$DTBO_SRC" "./$OUT_DTBO_NAME"
@@ -124,11 +128,26 @@ fi
 
 if [ -f "$IMAGE_SRC" ]; then
     echo "Packing now $OUT_BOOT_NAME ..."
-    mkbootimg \
-        --kernel "$IMAGE_SRC" \
-        --header_version 3 \
-        --os_version 16.0.0 \
-        --os_patch_level 2026-09 \
-        -o "$OUT_BOOT_NAME"
+    MKBOOTIMG_ARGS=(
+        --kernel "$IMAGE_SRC"
+        --header_version 3
+        --cmdline "$CMDLINE"
+        --board "$BOARD"
+        --os_version 16.0.0
+        --os_patch_level "$MONTH"
+    )
+    if [ -f "$DTB_SRC" ]; then
+        MKBOOTIMG_ARGS+=(--dtb "$DTB_SRC")
+        echo "Found dtb: $DTB_SRC"
+    fi
+    if [ -f "$RAMDISK_SRC" ]; then
+        MKBOOTIMG_ARGS+=(--ramdisk "$RAMDISK_SRC")
+        echo "Found ramdisk: $RAMDISK_SRC"
+    else
+        echo "WARNING: ramdisk not found at $RAMDISK_SRC, building boot.img WITHOUT ramdisk!"
+    fi
+
+    MKBOOTIMG_ARGS+=(-o "$OUT_BOOT_NAME")
+    mkbootimg "${MKBOOTIMG_ARGS[@]}"
     echo "boot.img Successfully generated: $OUT_BOOT_NAME"
 fi
