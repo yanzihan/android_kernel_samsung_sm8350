@@ -1,4 +1,4 @@
-name: Kernel Build
+name: Build kernel
 
 on:
   workflow_dispatch:
@@ -22,18 +22,15 @@ jobs:
         
       - name: Set up build environment
         run: |
-          sudo apt update
-          DEBIAN_FRONTEND=noninteractive sudo apt install -yq \
-            python-is-python3 \
-            attr ccache clang golang libbrotli-dev \
-            libgtest-dev libprotobuf-dev libunwind-dev libusb-1.0-0-dev libzstd-dev \
-            linux-modules-extra-$(uname -r) build-essential lld ninja-build protobuf-compiler zipalign gcc-aarch64-linux-gnu python3-pip
-          git clone https://android.googlesource.com/platform/system/tools/mkbootimg --depth=1 /tmp/mkbootimg
-          sudo ln -sf /tmp/mkbootimg/mkbootimg.py /usr/local/bin/mkbootimg
-          pip3 install -e /tmp/mkbootimg --break-system-packages
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
+          sudo apt-get install -y \
+            build-essential \
+            git \
+            curl \
+            unzip \
+            wget \
+            zip \
+            zstd
+
       - name: Fetch Clang Toolchain
         run: |
           git clone https://github.com/yanzihan/clang-r547379 --depth=1 clang
