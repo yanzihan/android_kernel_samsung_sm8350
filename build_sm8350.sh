@@ -124,11 +124,11 @@ fi
 
 if [ -f "$IMAGE_SRC" ]; then
     echo "Packing now $OUT_BOOT_NAME ..."
-    python3 -m mkbootimg \
+    mkbootimg \
         --kernel "$IMAGE_SRC" \
         --header_version 3 \
         --os_version 16.0.0 \
         --os_patch_level 2026-09 \
-        -o "./$OUT_BOOT_NAME"
+        -o "$OUT_BOOT_NAME"
     echo "boot.img Successfully generated: $OUT_BOOT_NAME"
 fi
