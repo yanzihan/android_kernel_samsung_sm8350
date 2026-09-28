@@ -30,6 +30,8 @@ jobs:
             linux-modules-extra-$(uname -r) build-essential lld ninja-build protobuf-compiler zipalign gcc-aarch64-linux-gnu python3-pip
           git clone https://android.googlesource.com/platform/system/tools/mkbootimg --depth=1 /tmp/mkbootimg
           sudo ln -sf /tmp/mkbootimg/mkbootimg.py /usr/local/bin/mkbootimg
+          PY_SITE=$(python3 -c "import site; print(site.getsitepackages()[0])")
+          sudo ln -sf /tmp/mkbootimg/mkbootimg.py $PY_SITE/mkbootimg.py
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
