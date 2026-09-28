@@ -10,6 +10,8 @@ on:
 jobs:
   build_lavender:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     strategy:
       fail-fast: false
@@ -85,4 +87,4 @@ jobs:
             Kernel: 5.4.274
             Clang: AOSP clang-r547379
         env:
-          GITHUB_TOKEN: ${{ secrets.TEST }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
